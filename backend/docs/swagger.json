@@ -1,0 +1,11 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Go backend API 文档",
+        "title": "AI Passage Creator API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/api",
+    "paths": {}
+}
