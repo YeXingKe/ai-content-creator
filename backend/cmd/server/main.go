@@ -19,7 +19,7 @@ var (
 	configFile = flag.String("config", "config.yaml", "配置文件路径")
 )
 
-// @title AI Passage Creator API
+// @title AI Content Creator API
 // @version 1.0
 // @description Go backend API 文档
 // @BasePath /api

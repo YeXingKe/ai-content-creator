@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+// 数据访问层
+
 // NotDeleted 软删除过滤 Scope
 func NotDeleted(db *gorm.DB) *gorm.DB {
 	return db.Where("isDelete = ?", 0)
