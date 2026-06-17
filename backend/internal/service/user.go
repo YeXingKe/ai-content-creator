@@ -1,17 +1,17 @@
 package service
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"time"
 
 	"github.com/ai-content-creator/backend/internal/common"
 	"github.com/ai-content-creator/backend/internal/model"
 	"github.com/ai-content-creator/backend/internal/store"
-	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/gin-contrib/sessions"
+	"gorm.io/gorm"
 )
-
-var jwtSecret []byte
 
 // UserService 用户服务
 type UserService struct {
@@ -19,175 +19,208 @@ type UserService struct {
 }
 
 // NewUserService 创建用户服务
-func NewUserService(userStore *store.UserStore) *UserService {
-	return &UserService{
-		store: userStore,
-	}
-}
-
-// InitJWT 初始化 JWT 密钥
-func InitJWT(secret string) {
-	jwtSecret = []byte(secret)
+func NewUserService(store *store.UserStore) *UserService {
+	return &UserService{store: store}
 }
 
 // Register 用户注册
-func (s *UserService) Register(req *model.RegisterRequest) (*model.User, *common.BizError) {
-	// 检查用户名是否已存在
-	exists, err := s.store.ExistsByUsername(req.Username)
-	if err != nil {
-		return nil, common.NewError(common.ErrDBInsert, "检查用户名失败", err)
+func (s *UserService) Register(req *model.RegisterRequest) (int64, error) {
+	// 校验参数
+	if req.UserAccount == "" || req.UserPassword == "" || req.CheckPassword == "" {
+		return 0, common.ErrParams.WithMessage("参数为空")
 	}
-	if exists {
-		return nil, common.NewError(common.ErrUserExists, common.ErrUserExistsMsg, nil)
+	if len(req.UserAccount) < common.MinAccountLength {
+		return 0, common.ErrParams.WithMessage("账号长度过短")
 	}
-
-	// 检查邮箱是否已存在
-	exists, err = s.store.ExistsByEmail(req.Email)
-	if err != nil {
-		return nil, common.NewError(common.ErrDBInsert, "检查邮箱失败", err)
+	if len(req.UserPassword) < common.MinPasswordLength || len(req.CheckPassword) < common.MinPasswordLength {
+		return 0, common.ErrParams.WithMessage("密码长度过短")
 	}
-	if exists {
-		return nil, common.NewError(common.ErrUserExists, "邮箱已被使用", nil)
+	if req.UserPassword != req.CheckPassword {
+		return 0, common.ErrParams.WithMessage("两次输入的密码不一致")
 	}
 
-	// 加密密码
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	// 查询用户是否已存在
+	count, err := s.store.CountByAccount(req.UserAccount)
 	if err != nil {
-		return nil, common.NewError(common.ErrInternalServer, "密码加密失败", err)
+		return 0, common.ErrSystem
+	}
+	if count > 0 {
+		return 0, common.ErrParams.WithMessage("账号重复")
 	}
 
 	// 创建用户
+	userName := "无名"
+	now := time.Now()
 	user := &model.User{
-		Username: req.Username,
-		Email:    req.Email,
-		Password: string(hashedPassword),
-		Nickname: req.Username, // 默认昵称为用户名
-		Status:   model.UserStatusActive,
+		UserAccount:  req.UserAccount,
+		UserPassword: encryptPassword(req.UserPassword),
+		UserName:     &userName,
+		UserRole:     string(model.RoleUser),
+		EditTime:     &now,
 	}
 
 	if err := s.store.Create(user); err != nil {
-		return nil, common.NewError(common.ErrDBInsert, common.ErrDBInsertMsg, err)
+		return 0, common.ErrOperation.WithMessage("注册失败，数据库错误")
 	}
 
-	return user, nil
+	return user.ID, nil
 }
 
 // Login 用户登录
-func (s *UserService) Login(req *model.LoginRequest) (string, *model.User, *common.BizError) {
-	// 查找用户（支持用户名或邮箱登录）
-	user, err := s.store.FindByUsernameOrEmail(req.Username)
+func (s *UserService) Login(req *model.LoginRequest, session sessions.Session) (*model.LoginUser, error) {
+	// 校验参数
+	if req.UserAccount == "" || req.UserPassword == "" {
+		return nil, common.ErrParams.WithMessage("参数为空")
+	}
+	if len(req.UserAccount) < common.MinAccountLength {
+		return nil, common.ErrParams.WithMessage("账号长度过短")
+	}
+	if len(req.UserPassword) < common.MinPasswordLength {
+		return nil, common.ErrParams.WithMessage("密码长度过短")
+	}
+
+	// 查询用户
+	user, err := s.store.GetByAccountAndPassword(req.UserAccount, encryptPassword(req.UserPassword))
 	if err != nil {
-		return "", nil, common.NewError(common.ErrDBQuery, common.ErrDBQueryMsg, err)
-	}
-	if user == nil {
-		return "", nil, common.NewError(common.ErrUserNotFound, common.ErrUserNotFoundMsg, nil)
-	}
-
-	// 验证密码
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return "", nil, common.NewError(common.ErrPasswordWrong, common.ErrPasswordWrongMsg, nil)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, common.ErrParams.WithMessage("用户不存在或密码错误")
+		}
+		return nil, common.ErrSystem
 	}
 
-	// 检查用户状态
-	if !user.IsActive() {
-		return "", nil, common.NewError(common.ErrUserDisabled, common.ErrUserDisabledMsg, nil)
+	// 保存登录态
+	session.Set(common.UserLoginState, user.ID)
+	if err := session.Save(); err != nil {
+		return nil, common.ErrSystem
 	}
 
-	// 更新最后登录时间
-	user.LastLogin = time.Now()
-	if err := s.store.Update(user); err != nil {
-		return "", nil, common.NewError(common.ErrDBUpdate, common.ErrDBUpdateMsg, err)
-	}
-
-	// 生成 JWT token
-	token, err := s.generateToken(user)
-	if err != nil {
-		return "", nil, common.NewError(common.ErrInternalServer, "生成令牌失败", err)
-	}
-
-	return token, user, nil
+	return user.ToLoginUser(), nil
 }
 
-// GetByID 根据ID获取用户
-func (s *UserService) GetByID(id int64) (*model.User, *common.BizError) {
-	user, err := s.store.FindByID(id)
+// GetLoginUser 获取当前登录用户
+func (s *UserService) GetLoginUser(session sessions.Session) (*model.User, error) {
+	userID := session.Get(common.UserLoginState)
+	if userID == nil {
+		return nil, common.ErrNotLogin
+	}
+
+	id, ok := userID.(int64)
+	if !ok {
+		return nil, common.ErrNotLogin
+	}
+
+	user, err := s.store.GetByID(id)
 	if err != nil {
-		return nil, common.NewError(common.ErrDBQuery, common.ErrDBQueryMsg, err)
-	}
-	if user == nil {
-		return nil, common.NewError(common.ErrUserNotFound, common.ErrUserNotFoundMsg, nil)
-	}
-	return user, nil
-}
-
-// UpdateProfile 更新用户资料
-func (s *UserService) UpdateProfile(userID int64, req *model.UpdateUserRequest) (*model.User, *common.BizError) {
-	// 获取用户
-	user, err := s.GetByID(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	// 更新字段
-	if req.Nickname != "" {
-		user.Nickname = req.Nickname
-	}
-	if req.Avatar != "" {
-		user.Avatar = req.Avatar
-	}
-	if req.Bio != "" {
-		user.Bio = req.Bio
-	}
-
-	// 保存更新
-	if err := s.store.Update(user); err != nil {
-		return nil, common.NewError(common.ErrDBUpdate, common.ErrDBUpdateMsg, err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, common.ErrNotLogin
+		}
+		return nil, common.ErrSystem
 	}
 
 	return user, nil
 }
 
-// ChangePassword 修改密码
-func (s *UserService) ChangePassword(userID int64, oldPassword, newPassword string) *common.BizError {
-	// 获取用户
-	user, err := s.GetByID(userID)
+// Logout 用户注销
+func (s *UserService) Logout(session sessions.Session) error {
+	if session.Get(common.UserLoginState) == nil {
+		return common.ErrOperation.WithMessage("用户未登录")
+	}
+	session.Delete(common.UserLoginState)
+	return session.Save()
+}
+
+// Create 创建用户（管理员）
+func (s *UserService) Create(req *model.AddUserRequest) (int64, error) {
+	now := time.Now()
+	user := &model.User{
+		UserAccount:  req.UserAccount,
+		UserPassword: encryptPassword(common.DefaultPassword),
+		UserName:     req.UserName,
+		UserAvatar:   req.UserAvatar,
+		UserProfile:  req.UserProfile,
+		UserRole:     req.UserRole,
+		EditTime:     &now,
+	}
+
+	if err := s.store.Create(user); err != nil {
+		return 0, common.ErrOperation
+	}
+	return user.ID, nil
+}
+
+// GetByID 根据 ID 获取用户
+func (s *UserService) GetByID(id int64) (*model.User, error) {
+	user, err := s.store.GetByID(id)
 	if err != nil {
-		return err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, common.ErrNotFound
+		}
+		return nil, common.ErrSystem
+	}
+	return user, nil
+}
+
+// Update 更新用户
+func (s *UserService) Update(req *model.UpdateUserRequest) error {
+	user := &model.User{
+		ID:          req.ID,
+		UserName:    req.UserName,
+		UserAvatar:  req.UserAvatar,
+		UserProfile: req.UserProfile,
+	}
+	if req.UserRole != nil {
+		user.UserRole = *req.UserRole
 	}
 
-	// 验证旧密码
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(oldPassword)); err != nil {
-		return common.NewError(common.ErrPasswordWrong, "原密码错误", nil)
-	}
-
-	// 加密新密码
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-	if err != nil {
-		return common.NewError(common.ErrInternalServer, "密码加密失败", err)
-	}
-
-	// 更新密码
-	user.Password = string(hashedPassword)
 	if err := s.store.Update(user); err != nil {
-		return common.NewError(common.ErrDBUpdate, common.ErrDBUpdateMsg, err)
+		return common.ErrOperation
 	}
-
 	return nil
 }
 
-// generateToken 生成 JWT token
-func (s *UserService) generateToken(user *model.User) (string, error) {
-	if len(jwtSecret) == 0 {
-		return "", errors.New("JWT secret not initialized")
+// Delete 删除用户
+func (s *UserService) Delete(id int64) error {
+	if err := s.store.Delete(id); err != nil {
+		return common.ErrOperation
+	}
+	return nil
+}
+
+// ListByPage 分页查询用户列表
+func (s *UserService) ListByPage(req *model.QueryUserRequest) (*model.PageResult, error) {
+	query := s.store.BuildQuery(
+		req.ID,
+		req.UserAccount,
+		req.UserName,
+		req.UserProfile,
+		req.UserRole,
+		req.SortField,
+		req.SortOrder,
+	)
+
+	users, total, err := s.store.List(query, req.PageNum, req.PageSize)
+	if err != nil {
+		return nil, common.ErrSystem
 	}
 
-	claims := jwt.MapClaims{
-		"user_id":  user.ID,
-		"username": user.Username,
-		"exp":      time.Now().Add(168 * time.Hour).Unix(), // 7天过期
-		"iat":      time.Now().Unix(),
+	// 转换为用户信息列表
+	userInfos := make([]model.UserInfo, 0, len(users))
+	for i := range users {
+		if info := users[i].ToUserInfo(); info != nil {
+			userInfos = append(userInfos, *info)
+		}
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
+	return &model.PageResult{
+		Total:    total,
+		Records:  userInfos,
+		PageNum:  req.PageNum,
+		PageSize: req.PageSize,
+	}, nil
+}
+
+// encryptPassword 加密密码
+func encryptPassword(password string) string {
+	hash := md5.Sum([]byte(password + common.PasswordSalt))
+	return hex.EncodeToString(hash[:])
 }

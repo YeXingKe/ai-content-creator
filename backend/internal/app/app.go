@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/ai-content-creator/backend/internal/config"
+	"github.com/ai-content-creator/backend/internal/handler"
 	"github.com/ai-content-creator/backend/internal/service"
 	"github.com/ai-content-creator/backend/internal/store"
 	"gorm.io/driver/mysql"
