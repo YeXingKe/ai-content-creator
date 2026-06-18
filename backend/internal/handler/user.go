@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// 作用：HTTP 接口层（Handler / Controller） 文件：负责接收前端请求、调用 UserService、返回统一 JSON
+
 // UserHandler 用户处理器
 type UserHandler struct {
    svc *service.UserService
@@ -20,7 +22,7 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 	return &UserHandler{svc: svc}
 }
 
-// Register 用户注册
+// Register 用户注册  *gin.Context 表示一次 HTTP 请求上下文
 func (h *UserHandler) Register(c *gin.Context) {
 	var req model.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -45,10 +47,10 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	session := sessions.Default(c)
-	loginUser, err := h.svc.Login(&req, session)
+	session := sessions.Default(c) // 当前请求的 Session
+	loginUser, err := h.svc.Login(&req, session) // 调用 UserService 的 Login 方法
 	if err != nil {
-		handleError(c, err)
+		handleError(c, err) // 统一错误处理
 		return
 	}
 

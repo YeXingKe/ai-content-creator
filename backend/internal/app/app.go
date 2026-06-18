@@ -35,23 +35,25 @@ func New(cfg *config.Config) (*App, error) {
 	}
 
 	// 初始化各层
-	userStore := store.NewUserStore(db)
-	userService := service.NewUserService(userStore)
-	userHandler := handler.NewUserHandler(userService)
+	userStore := store.NewUserStore(db) // SQL、表、字段
+	userService := service.NewUserService(userStore) // 业务逻辑、校验
+	userHandler := handler.NewUserHandler(userService) // 处理请求、响应
 	healthHandler := handler.NewHealthHandler()
-
+    
+	// Go 没有 try/catch，习惯用 「结果 + error」 表示成败
+	// & 表示取地址，返回的是 *App 指针，不是拷贝整个结构体。
 	return &App{
-		Config:        cfg,
-		DB:            db,
-		UserHandler:   userHandler,
-		HealthHandler: healthHandler,
-		UserService:   userService,
+		Config:        cfg,           // 配置（端口、数据库地址等）
+		DB:            db,            // 数据库连接（Close 时要关）
+		UserHandler:   userHandler,   // 用户接口（注册、登录等）
+		HealthHandler: healthHandler, // 健康检查 /api/health
+		UserService:   userService,   // 用户业务（中间件鉴权也会用）
 	}, nil
 }
 
 // initDB 初始化数据库
 func initDB(cfg *config.Config) (*gorm.DB, error) {
-	dsn := cfg.Database.GetDSN()
+	dsn := cfg.Database.GetDSN() // 数据库连接字符串
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
@@ -65,8 +67,8 @@ func initDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("get database instance: %w", err)
 	}
 
-	sqlDB.SetMaxIdleConns(cfg.Database.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(cfg.Database.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(cfg.Database.MaxIdleConns) // 空闲连接数上限
+	sqlDB.SetMaxOpenConns(cfg.Database.MaxOpenConns) // 最大打开连接数
 
 	log.Println("database connected")
 	return db, nil

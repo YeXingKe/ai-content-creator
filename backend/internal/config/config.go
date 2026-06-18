@@ -6,7 +6,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+// 作用：把 config.yaml 里的配置读进 Go 结构体，供全项目使用。
+
 // Config 应用配置
+// Viper 用 mapstructure 把 yaml 映射到 Go 结构体
+// mapstructure 标签 yaml 蛇形 ↔ Go 驼峰
 type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Database DatabaseConfig `mapstructure:"database"`
@@ -54,16 +58,17 @@ type LogConfig struct {
 
 // LoadConfig 加载配置文件
 func LoadConfig(configPath string) (*Config, error) {
-	v := viper.New()
+	v := viper.New() // 新建一个 Viper 实例
 	v.SetConfigFile(configPath)
 	v.SetConfigType("yaml")
 
-	// 读取配置文件
+	// 从磁盘读文件；文件不存在、权限问题等会在这里失败
 	if err := v.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("读取配置文件失败: %w", err)
 	}
 
 	var config Config
+	// 把 Viper 内存里的配置反序列化进 Config 结构体
 	if err := v.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("解析配置文件失败: %w", err)
 	}

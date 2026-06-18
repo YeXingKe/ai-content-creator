@@ -1,18 +1,18 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"log"
-	"net/http"
+	"flag"      // 命令行参数解析
+	"fmt"       // 格式化字符串（如拼接地址）
+	"log"       // 日志输出
+	"net/http"  // HTTP 状态码、响应等
 
-	"github.com/ai-content-creator/backend/docs"
-	"github.com/ai-content-creator/backend/internal/app"
-	"github.com/ai-content-creator/backend/internal/config"
-	"github.com/ai-content-creator/backend/internal/middleware"
-	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/ai-content-creator/backend/docs"           // Swagger 文档（swag 生成）
+	"github.com/ai-content-creator/backend/internal/app"   // 应用初始化（DB、Handler 等）
+	"github.com/ai-content-creator/backend/internal/config" // 配置加载
+	"github.com/ai-content-creator/backend/internal/middleware" // 中间件（CORS、Session）
+	"github.com/gin-gonic/gin"                               // Web 框架
+	swaggerFiles "github.com/swaggo/files"                   // Swagger 静态资源
+	ginSwagger "github.com/swaggo/gin-swagger"               // Gin 的 Swagger UI 集成
 )
 
 var (

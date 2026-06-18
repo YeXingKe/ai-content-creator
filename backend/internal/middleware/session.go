@@ -7,7 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SetupSession 配置 Session 中间件
+// SetupSession 配置 Session 中间件：一次性完成 Session 配置
+// r *gin.Engine 根路由引擎，中间件挂在这里
+// cfg *config.Config 配置，包含 Session 相关设置
 func SetupSession(r *gin.Engine, cfg *config.Config) error {
 	// 创建 Redis 存储
 	// 参数：size, network, address, username, password, keyPairs...

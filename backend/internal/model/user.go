@@ -2,6 +2,16 @@ package model
 
 import "time"
 
+
+// *string SQL 里这些列是 null，Go 用指针表示「数据库可为 NULL」
+// index:idx_userName 昵称有索引，方便按昵称搜索
+// 有 json 标签 可以返回给前端
+
+// json:"userAccount" JSON 序列化 / Gin 绑定 HTTP 请求/响应里的字段名
+// gorm:"column:userAccount" GORM 数据库表里的列名、主键、索引等
+
+// 前端 ↔ Go：靠 json
+// Go ↔ 数据库：靠 gorm
 // User 用户实体（数据库模型）
 type User struct {
 	ID           int64      `gorm:"primaryKey;autoIncrement" json:"id"`
