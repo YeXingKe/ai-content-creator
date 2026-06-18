@@ -1,8 +1,440 @@
 basePath: /api
+definitions:
+  common.BaseResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  model.AddUserRequest:
+    properties:
+      userAccount:
+        type: string
+      userAvatar:
+        type: string
+      userName:
+        type: string
+      userProfile:
+        type: string
+      userRole:
+        type: string
+    required:
+    - userAccount
+    type: object
+  model.DeleteRequest:
+    properties:
+      id:
+        type: integer
+    required:
+    - id
+    type: object
+  model.LoginRequest:
+    properties:
+      userAccount:
+        description: 账号，必填字符串
+        minLength: 4
+        type: string
+      userPassword:
+        description: JSON 字段名，和前端一致（驼峰）
+        minLength: 8
+        type: string
+    required:
+    - userAccount
+    - userPassword
+    type: object
+  model.LoginUser:
+    properties:
+      createTime:
+        type: string
+      editTime:
+        type: string
+      id:
+        type: integer
+      quota:
+        type: integer
+      updateTime:
+        type: string
+      userAccount:
+        type: string
+      userAvatar:
+        type: string
+      userName:
+        type: string
+      userProfile:
+        type: string
+      userRole:
+        type: string
+      vipTime:
+        type: string
+    type: object
+  model.PageResult:
+    properties:
+      pageNum:
+        type: integer
+      pageSize:
+        type: integer
+      records: {}
+      total:
+        type: integer
+    type: object
+  model.QueryUserRequest:
+    properties:
+      id:
+        type: integer
+      pageNum:
+        type: integer
+      pageSize:
+        type: integer
+      sortField:
+        type: string
+      sortOrder:
+        type: string
+      userAccount:
+        type: string
+      userName:
+        type: string
+      userProfile:
+        type: string
+      userRole:
+        type: string
+    type: object
+  model.RegisterRequest:
+    properties:
+      checkPassword:
+        minLength: 8
+        type: string
+      userAccount:
+        minLength: 4
+        type: string
+      userPassword:
+        minLength: 8
+        type: string
+    required:
+    - checkPassword
+    - userAccount
+    - userPassword
+    type: object
+  model.UpdateUserRequest:
+    properties:
+      id:
+        type: integer
+      userAvatar:
+        type: string
+      userName:
+        type: string
+      userProfile:
+        type: string
+      userRole:
+        type: string
+    required:
+    - id
+    type: object
+  model.User:
+    properties:
+      createTime:
+        type: string
+      editTime:
+        type: string
+      id:
+        type: integer
+      quota:
+        type: integer
+      updateTime:
+        type: string
+      userAccount:
+        type: string
+      userAvatar:
+        type: string
+      userName:
+        type: string
+      userProfile:
+        type: string
+      userRole:
+        type: string
+      vipTime:
+        type: string
+    type: object
+  model.UserInfo:
+    properties:
+      createTime:
+        type: string
+      editTime:
+        type: string
+      id:
+        type: integer
+      updateTime:
+        type: string
+      userAccount:
+        type: string
+      userAvatar:
+        type: string
+      userName:
+        type: string
+      userProfile:
+        type: string
+      userRole:
+        type: string
+      vipTime:
+        type: string
+    type: object
 info:
   contact: {}
   description: Go backend API 文档
-  title: AI Passage Creator API
+  title: AI Content Creator API
   version: "1.0"
-paths: {}
+paths:
+  /health:
+    get:
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+      summary: 健康检查
+      tags:
+      - 系统
+  /user/add:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 创建参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.AddUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  format: int64
+                  type: integer
+              type: object
+      summary: 创建用户
+      tags:
+      - 用户管理
+  /user/delete:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 删除参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.DeleteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+      summary: 删除用户
+      tags:
+      - 用户管理
+  /user/get:
+    get:
+      parameters:
+      - description: 用户 ID
+        format: int64
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.User'
+              type: object
+      summary: 根据 ID 获取用户
+      tags:
+      - 用户管理
+  /user/get/login:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.LoginUser'
+              type: object
+      summary: 获取当前登录用户
+      tags:
+      - 用户
+  /user/get/vo:
+    get:
+      parameters:
+      - description: 用户 ID
+        format: int64
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.UserInfo'
+              type: object
+      summary: 根据 ID 获取用户信息
+      tags:
+      - 用户
+  /user/list/page/vo:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 查询参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.QueryUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.PageResult'
+              type: object
+      summary: 分页查询用户列表
+      tags:
+      - 用户管理
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 登录参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.LoginUser'
+              type: object
+      summary: 用户登录
+      tags:
+      - 用户
+  /user/logout:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+      summary: 用户注销
+      tags:
+      - 用户
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 注册参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  format: int64
+                  type: integer
+              type: object
+      summary: 用户注册
+      tags:
+      - 用户
+  /user/update:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 更新参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+      summary: 更新用户
+      tags:
+      - 用户管理
 swagger: "2.0"

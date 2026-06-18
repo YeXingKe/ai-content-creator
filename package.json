@@ -14,6 +14,8 @@
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
     "openapi2ts": "openapi2ts",
+    "swagger": "cd backend && swag init -g cmd/server/main.go -o docs",
+    "backend": "go run -C backend ./cmd/server/main.go",
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {

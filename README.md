@@ -52,3 +52,6 @@ npm run test:unit
 ```sh
 npm run lint
 ```
+
+swagger: http://localhost:8123/api/v3/api-docs
+http://localhost:8123/api/swagger/index.html

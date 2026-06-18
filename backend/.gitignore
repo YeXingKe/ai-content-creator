@@ -22,3 +22,5 @@ logs/
 tmp/
 temp/
 
+docs/swagger.json
+docs/swagger.yaml

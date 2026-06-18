@@ -14,7 +14,713 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/health": {
+            "get": {
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "系统"
+                ],
+                "summary": "健康检查",
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/add": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "创建用户",
+                "parameters": [
+                    {
+                        "description": "创建参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.AddUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer",
+                                            "format": "int64"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/user/delete": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "删除用户",
+                "parameters": [
+                    {
+                        "description": "删除参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.DeleteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/user/get": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "根据 ID 获取用户",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "用户 ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.User"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/user/get/login": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "获取当前登录用户",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.LoginUser"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/user/get/vo": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "根据 ID 获取用户信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "用户 ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.UserInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/user/list/page/vo": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "分页查询用户列表",
+                "parameters": [
+                    {
+                        "description": "查询参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.QueryUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.PageResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/user/login": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "用户登录",
+                "parameters": [
+                    {
+                        "description": "登录参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.LoginUser"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/user/logout": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "用户注销",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/user/register": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "用户注册",
+                "parameters": [
+                    {
+                        "description": "注册参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer",
+                                            "format": "int64"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/user/update": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "更新用户",
+                "parameters": [
+                    {
+                        "description": "更新参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "common.BaseResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.AddUserRequest": {
+            "type": "object",
+            "required": [
+                "userAccount"
+            ],
+            "properties": {
+                "userAccount": {
+                    "type": "string"
+                },
+                "userAvatar": {
+                    "type": "string"
+                },
+                "userName": {
+                    "type": "string"
+                },
+                "userProfile": {
+                    "type": "string"
+                },
+                "userRole": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.DeleteRequest": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.LoginRequest": {
+            "type": "object",
+            "required": [
+                "userAccount",
+                "userPassword"
+            ],
+            "properties": {
+                "userAccount": {
+                    "description": "账号，必填字符串",
+                    "type": "string",
+                    "minLength": 4
+                },
+                "userPassword": {
+                    "description": "JSON 字段名，和前端一致（驼峰）",
+                    "type": "string",
+                    "minLength": 8
+                }
+            }
+        },
+        "model.LoginUser": {
+            "type": "object",
+            "properties": {
+                "createTime": {
+                    "type": "string"
+                },
+                "editTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "quota": {
+                    "type": "integer"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "userAccount": {
+                    "type": "string"
+                },
+                "userAvatar": {
+                    "type": "string"
+                },
+                "userName": {
+                    "type": "string"
+                },
+                "userProfile": {
+                    "type": "string"
+                },
+                "userRole": {
+                    "type": "string"
+                },
+                "vipTime": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.PageResult": {
+            "type": "object",
+            "properties": {
+                "pageNum": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "records": {},
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.QueryUserRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "pageNum": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "sortField": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "string"
+                },
+                "userAccount": {
+                    "type": "string"
+                },
+                "userName": {
+                    "type": "string"
+                },
+                "userProfile": {
+                    "type": "string"
+                },
+                "userRole": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "checkPassword",
+                "userAccount",
+                "userPassword"
+            ],
+            "properties": {
+                "checkPassword": {
+                    "type": "string",
+                    "minLength": 8
+                },
+                "userAccount": {
+                    "type": "string",
+                    "minLength": 4
+                },
+                "userPassword": {
+                    "type": "string",
+                    "minLength": 8
+                }
+            }
+        },
+        "model.UpdateUserRequest": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "userAvatar": {
+                    "type": "string"
+                },
+                "userName": {
+                    "type": "string"
+                },
+                "userProfile": {
+                    "type": "string"
+                },
+                "userRole": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.User": {
+            "type": "object",
+            "properties": {
+                "createTime": {
+                    "type": "string"
+                },
+                "editTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "quota": {
+                    "type": "integer"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "userAccount": {
+                    "type": "string"
+                },
+                "userAvatar": {
+                    "type": "string"
+                },
+                "userName": {
+                    "type": "string"
+                },
+                "userProfile": {
+                    "type": "string"
+                },
+                "userRole": {
+                    "type": "string"
+                },
+                "vipTime": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.UserInfo": {
+            "type": "object",
+            "properties": {
+                "createTime": {
+                    "type": "string"
+                },
+                "editTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "userAccount": {
+                    "type": "string"
+                },
+                "userAvatar": {
+                    "type": "string"
+                },
+                "userName": {
+                    "type": "string"
+                },
+                "userProfile": {
+                    "type": "string"
+                },
+                "userRole": {
+                    "type": "string"
+                },
+                "vipTime": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
@@ -23,7 +729,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "/api",
 	Schemes:          []string{},
-	Title:            "AI Passage Creator API",
+	Title:            "AI Content Creator API",
 	Description:      "Go backend API 文档",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
