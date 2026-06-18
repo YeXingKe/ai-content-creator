@@ -12,9 +12,9 @@ import (
 
 // UserHandler 用户处理器
 type UserHandler struct {
-	svc *service.UserService
+   svc *service.UserService
 }
-
+  
 // NewUserHandler 创建用户处理器
 func NewUserHandler(svc *service.UserService) *UserHandler {
 	return &UserHandler{svc: svc}

@@ -11,10 +11,11 @@ type HealthHandler struct{}
 
 // NewHealthHandler 创建健康检查处理器
 func NewHealthHandler() *HealthHandler {
-	return &HealthHandler{}
+	 return &HealthHandler{}
 }
 
 // Check 健康检查
 func (h *HealthHandler) Check(c *gin.Context) {
 	c.String(http.StatusOK, "ok")
 }
+·
