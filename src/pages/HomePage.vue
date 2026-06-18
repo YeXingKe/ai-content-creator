@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/loginUser'
-import { listArticle } from '@/api/articleController'
+// import { listArticle } from '@/api/articleController'
 import dayjs from 'dayjs'
 import {
   RocketOutlined,
@@ -42,19 +42,19 @@ const viewArticle = (article: API.ArticleVO) => {
 }
 
 // 加载最近文章
-const loadRecentArticles = async () => {
-  if (!loginUserStore.loginUser.id) return
+// const loadRecentArticles = async () => {
+//   if (!loginUserStore.loginUser.id) return
 
-  loadingArticles.value = true
-  try {
-    const res = await listArticle({ pageNum: 1, pageSize: 6 })
-    recentArticles.value = res.data.data?.records || []
-  } catch (error) {
-    console.error('加载文章失败:', error)
-  } finally {
-    loadingArticles.value = false
-  }
-}
+//   loadingArticles.value = true
+//   try {
+//     const res = await listArticle({ pageNum: 1, pageSize: 6 })
+//     recentArticles.value = res.data.data?.records || []
+//   } catch (error) {
+//     console.error('加载文章失败:', error)
+//   } finally {
+//     loadingArticles.value = false
+//   }
+// }
 
 // 格式化时间
 const formatTime = (time: string | undefined) => {
@@ -103,7 +103,7 @@ const features = [
 ]
 
 onMounted(() => {
-  loadRecentArticles()
+  // loadRecentArticles()
 })
 </script>
 
