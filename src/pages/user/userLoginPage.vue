@@ -84,8 +84,8 @@
 
 <script lang="ts" setup>
 import { reactive } from 'vue'
-import { userLogin } from '@/api/userController.ts'
-import { useLoginUserStore } from '@/stores/loginUser.ts'
+import { userLogin } from '@/api/userController'
+import { useLoginUserStore } from '@/stores/loginUser'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { UserOutlined, LockOutlined, CheckCircleOutlined } from '@ant-design/icons-vue'

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getLoginUser } from '@/api/userController.ts'
+import { getLoginUser } from '@/api/userController'
 import { DEFAULT_USERNAME } from '@/constants/user'
 
 /**

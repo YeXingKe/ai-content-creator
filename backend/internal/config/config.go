@@ -12,12 +12,31 @@ import (
 // Viper 用 mapstructure 把 yaml 映射到 Go 结构体
 // mapstructure 标签 yaml 蛇形 ↔ Go 驼峰
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	Session  SessionConfig  `mapstructure:"session"`
-	Log      LogConfig      `mapstructure:"log"`
+    Server   ServerConfig   `mapstructure:"server"`
+    Database DatabaseConfig `mapstructure:"database"`
+    Redis    RedisConfig    `mapstructure:"redis"`
+    Session  SessionConfig  `mapstructure:"session"`
+    AI       AIConfig       `mapstructure:"ai"`
+    Pexels   PexelsConfig   `mapstructure:"pexels"`
+    Log      LogConfig      `mapstructure:"log"`
 }
+
+// AIConfig AI 配置
+type AIConfig struct {
+    DashScope DashScopeConfig `mapstructure:"dashscope"`
+}
+
+// DashScopeConfig 阿里云 DashScope 配置
+type DashScopeConfig struct {
+    APIKey string `mapstructure:"api_key"`
+    Model  string `mapstructure:"model"`
+}
+
+// PexelsConfig Pexels 配置
+type PexelsConfig struct {
+    APIKey string `mapstructure:"api_key"`
+}
+
 
 // ServerConfig 服务器配置
 type ServerConfig struct {
