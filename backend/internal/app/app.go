@@ -26,30 +26,38 @@ type App struct {
 	UserService *service.UserService
 }
 
-// New 创建应用实例
 func New(cfg *config.Config) (*App, error) {
-	// 初始化数据库
-	db, err := initDB(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("init database: %w", err)
-	}
+    db, err := initDB(cfg)
+    if err != nil {
+        return nil, fmt.Errorf("init database: %w", err)
+    }
 
-	// 初始化各层
-	userStore := store.NewUserStore(db) // SQL、表、字段
-	userService := service.NewUserService(userStore) // 业务逻辑、校验
-	userHandler := handler.NewUserHandler(userService) // 处理请求、响应
-	healthHandler := handler.NewHealthHandler()
-    
-	// Go 没有 try/catch，习惯用 「结果 + error」 表示成败
-	// & 表示取地址，返回的是 *App 指针，不是拷贝整个结构体。
-	return &App{
-		Config:        cfg,           // 配置（端口、数据库地址等）
-		DB:            db,            // 数据库连接（Close 时要关）
-		UserHandler:   userHandler,   // 用户接口（注册、登录等）
-		HealthHandler: healthHandler, // 健康检查 /api/health
-		UserService:   userService,   // 用户业务（中间件鉴权也会用）
-	}, nil
+    userStore := store.NewUserStore(db)
+    articleStore := store.NewArticleStore(db)
+    sseManager := common.NewSSEManager()
+
+    userService := service.NewUserService(userStore)
+    quotaService := service.NewQuotaService(userStore)
+    pexelsService := service.NewPexelsService(cfg)
+    cosService := service.NewCosService()
+
+    agentService, err := service.NewArticleAgentService(cfg, pexelsService, cosService, sseManager)
+    if err != nil {
+        return nil, fmt.Errorf("init agent service: %w", err)
+    }
+
+    articleService := service.NewArticleService(articleStore, agentService, quotaService, sseManager)
+
+    return &App{
+        Config:         cfg,
+        DB:             db,
+        UserHandler:    handler.NewUserHandler(userService),
+        ArticleHandler: handler.NewArticleHandler(articleService, userService, sseManager),
+        HealthHandler:  handler.NewHealthHandler(),
+        UserService:    userService,
+    }, nil
 }
+
 
 // initDB 初始化数据库
 func initDB(cfg *config.Config) (*gorm.DB, error) {

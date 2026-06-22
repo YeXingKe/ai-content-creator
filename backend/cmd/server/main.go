@@ -78,7 +78,23 @@ func main() {
 			user.POST("/update", adminAuth, application.UserHandler.Update)
 			user.POST("/list/page/vo", adminAuth, application.UserHandler.ListPageVO)
 		}
+
+		// 文章路由
+		userAuth := middleware.AuthCheck(application.UserService, common.UserRole)
+		article := api.Group("/article")
+		{
+			article.POST("/create", userAuth, application.ArticleHandler.Create)
+			article.POST("/confirm-title", userAuth, application.ArticleHandler.ConfirmTitle)
+			article.POST("/confirm-outline", userAuth, application.ArticleHandler.ConfirmOutline)
+			article.POST("/ai-modify-outline", userAuth, application.ArticleHandler.AiModifyOutline)
+			article.GET("/progress/:taskId", application.ArticleHandler.GetProgress)
+			article.GET("/execution-logs/:taskId", application.ArticleHandler.GetExecutionLogs)
+			article.GET("/:taskId", userAuth, application.ArticleHandler.Get)
+			article.POST("/list", userAuth, application.ArticleHandler.List)
+			article.POST("/delete", userAuth, application.ArticleHandler.Delete)
+		}
 	}
+
 
 	// 启动服务器
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
