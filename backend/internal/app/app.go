@@ -32,21 +32,21 @@ func New(cfg *config.Config) (*App, error) {
         return nil, fmt.Errorf("init database: %w", err)
     }
 
-    userStore := store.NewUserStore(db)
-    articleStore := store.NewArticleStore(db)
-    sseManager := common.NewSSEManager()
+    userStore := store.NewUserStore(db) // 用户表 CRUD
+    articleStore := store.NewArticleStore(db) // 文章表 CRUD
+    sseManager := common.NewSSEManager() // SSE 管理器
 
-    userService := service.NewUserService(userStore)
-    quotaService := service.NewQuotaService(userStore)
-    pexelsService := service.NewPexelsService(cfg)
-    cosService := service.NewCosService()
+    userService := service.NewUserService(userStore) // 用户服务
+    quotaService := service.NewQuotaService(userStore) // 配额服务
+    pexelsService := service.NewPexelsService(cfg) // Pexels 服务
+    cosService := service.NewCosService() // COS 服务
 
-    agentService, err := service.NewArticleAgentService(cfg, pexelsService, cosService, sseManager)
+    agentService, err := service.NewArticleAgentService(cfg, pexelsService, cosService, sseManager) //文章 AI Agent（LLM + 配图 + 上传 + 流式输出）
     if err != nil {
         return nil, fmt.Errorf("init agent service: %w", err)
     }
 
-    articleService := service.NewArticleService(articleStore, agentService, quotaService, sseManager)
+    articleService := service.NewArticleService(articleStore, agentService, quotaService, sseManager) // 文章服务
 
     return &App{
         Config:         cfg,
