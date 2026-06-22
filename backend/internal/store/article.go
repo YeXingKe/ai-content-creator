@@ -1,4 +1,8 @@
 package store
+import (
+    "github.com/ai-content-creator/backend/internal/model"
+	"gorm.io/gorm"
+)
 
 type ArticleStore struct {
     db *gorm.DB
