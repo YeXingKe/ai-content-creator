@@ -85,7 +85,10 @@ func main() {
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port) // 监听地址，如 :8567
-	log.Printf("server starting at http://localhost%s%s", addr, cfg.Server.ContextPath)
+	baseURL := fmt.Sprintf("http://localhost%s%s", addr, cfg.Server.ContextPath)
+	log.Printf("server starting at %s", baseURL)
+	log.Printf("swagger UI:    %s/swagger/index.html", baseURL)
+	log.Printf("openapi JSON:  %s/v3/api-docs", baseURL)
 	if err := r.Run(addr); err != nil { // 阻塞启动 HTTP 服务
 		log.Fatalf("start server: %v", err) // 启动失败则退出
 	}

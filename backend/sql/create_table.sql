@@ -3,10 +3,10 @@ SET NAMES utf8mb4;
 SET CHARACTER SET utf8mb4;
 
 -- 创建库
-create database if not exists ai_passage_creator CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+create database if not exists ai_content_creator CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 切换库
-use ai_passage_creator;
+use ai_content_creator;
 
 -- 用户表（基础字段，quota 和 vipTime 由增量脚本添加）
 create table if not exists user
