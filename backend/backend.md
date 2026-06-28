@@ -233,7 +233,7 @@ user.POST("/add", adminAuth, application.UserHandler.Add)
 
 ### 8.4 密码加密
 
-- 算法：`MD5(password + salt)`，盐值 `"yupi"`（`common.PasswordSalt`）
+- 算法：`MD5(password + salt)`，盐值 `"mason"`（`common.PasswordSalt`）
 - 默认密码（管理员创建用户）：`12345678`
 
 > 生产环境建议升级为 bcrypt / argon2。

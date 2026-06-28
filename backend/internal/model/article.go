@@ -63,11 +63,11 @@ type ArticleInfo struct {
 	Content             *string          `json:"content"`             // 正文内容
 	FullContent         *string          `json:"fullContent"`         // 完整正文（含图片）
 	Images              []ImageResult    `json:"images"`              // 配图结果列表（已解析）
-	Status              string           `json:"status"`              // 任务状态
-	Phase               string           `json:"phase"`               // 当前阶段
-	ErrorMessage        *string          `json:"errorMessage"`        // 错误信息
-	Style               string           `json:"style"`               // 文章风格
-	EnabledImageMethods []string         `json:"enabledImageMethods"` // 允许的配图方式列表（已解析）
+	Status              string           `json:"status" enums:"PENDING,PROCESSING,COMPLETED,FAILED" example:"PROCESSING"`                                                                                         // 任务状态：PENDING 等待 / PROCESSING 处理中 / COMPLETED 已完成 / FAILED 失败
+	Phase               string           `json:"phase" enums:"PENDING,TITLE_GENERATING,TITLE_SELECTING,OUTLINE_GENERATING,OUTLINE_EDITING,CONTENT_GENERATING" example:"TITLE_SELECTING"`                             // 当前阶段：PENDING / TITLE_GENERATING / TITLE_SELECTING / OUTLINE_GENERATING / OUTLINE_EDITING / CONTENT_GENERATING
+	ErrorMessage        *string          `json:"errorMessage" example:"配额不足"`                                                                                                                                     // 失败时的错误信息
+	Style               string           `json:"style" enums:"tech,emotional,educational,humorous" example:"tech"`                                                                                                  // 文章风格：tech 科技 / emotional 情感 / educational 教育 / humorous 幽默
+	EnabledImageMethods []string         `json:"enabledImageMethods" example:"PEXELS,MERMAID"`                                                                                                                      // 允许的配图方式列表（已解析）
 	CreateTime          time.Time        `json:"createTime"`          // 创建时间
 	CompletedTime       *time.Time       `json:"completedTime"`       // 完成时间
 }
@@ -170,7 +170,7 @@ type ImageRequirement struct {
 type ImageResult struct {
 	Position      int    `json:"position"`      // 在正文中的位置序号
 	URL           string `json:"url"`           // 图片访问 URL
-	Method        string `json:"method"`        // 实际使用的配图方式
+	Method        string `json:"method" example:"PEXELS" enums:"PEXELS,MERMAID,NANO_BANANA,ICONIFY,EMOJI_PACK,SVG_DIAGRAM"` // 实际使用的配图方式
 	Keywords      string `json:"keywords"`      // 搜索关键词
 	SectionTitle  string `json:"sectionTitle"`  // 所属章节标题
 	Description   string `json:"description"`   // 图片描述

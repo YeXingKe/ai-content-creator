@@ -20,10 +20,26 @@ var (
 	configFile = flag.String("config", "config.yaml", "配置文件路径") // 可通过 -config 指定配置文件（当前未使用）
 )
 
-// @title AI Content Creator API
-// @version 1.0
-// @description Go backend API 文档
-// @BasePath /api
+// @title           AI Content Creator API
+// @version         1.0
+// @description     AI 内容创作平台后端 API。包含用户注册登录、文章多智能体生成、SSE 进度推送、配额管理等。
+// @termsOfService  https://github.com/ai-content-creator
+
+// @contact.name   API Support
+// @contact.url    https://github.com/ai-content-creator
+
+// @license.name  MIT
+// @license.url   https://opensource.org/licenses/MIT
+
+// @host      localhost:8123
+// @BasePath  /api
+
+// @schemes  http
+
+// @securityDefinitions.apikey  SessionCookie
+// @in                          cookie
+// @name                        session
+// @description                 登录成功后服务端写入 Session Cookie，受保护接口需携带
 func main() {
 	cfg, err := config.LoadConfig("config.yaml") // 读取 config.yaml（端口、数据库、Redis、AI 等配置）
 	if err != nil {

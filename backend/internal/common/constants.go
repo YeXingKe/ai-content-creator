@@ -10,7 +10,7 @@ const (
 
 // 密码相关常量
 const (
-	PasswordSalt      = "mason"
+	PasswordSalt      = "mason" // 须与 sql/create_table.sql 初始化数据中的 MD5 盐值一致
 	DefaultPassword   = "12345678"
 	MinAccountLength  = 4
 	MinPasswordLength = 8

@@ -3,41 +3,367 @@ definitions:
   common.BaseResponse:
     properties:
       code:
+        description: 业务状态码，0 表示成功，非 0 表示失败
+        example: 0
         type: integer
-      data: {}
+      data:
+        description: 响应数据，成功时返回；失败时通常为 null
       message:
+        description: 响应消息，成功时为 ok，失败时为错误描述
+        example: ok
         type: string
     type: object
   model.AddUserRequest:
     properties:
       userAccount:
+        description: 登录账号
+        example: newuser
         type: string
       userAvatar:
+        description: 头像 URL（可选）
+        example: https://example.com/avatar.png
         type: string
       userName:
+        description: 用户昵称（可选）
+        example: 新用户
         type: string
       userProfile:
+        description: 个人简介（可选）
+        example: 个人简介
         type: string
       userRole:
+        description: 用户角色：user / admin / vip
+        enum:
+        - user
+        - admin
+        - vip
+        example: user
         type: string
     required:
     - userAccount
     type: object
+  model.AgentExecutionStats:
+    properties:
+      agentCount:
+        description: 智能体数量
+        type: integer
+      agentDurations:
+        additionalProperties:
+          type: integer
+        description: 各智能体耗时
+        type: object
+      logs:
+        description: 详细日志列表
+        items:
+          $ref: '#/definitions/model.AgentLog'
+        type: array
+      overallStatus:
+        description: 总体状态：SUCCESS 全部成功 / FAILED 存在失败 / RUNNING 仍在执行
+        enum:
+        - SUCCESS
+        - FAILED
+        - RUNNING
+        example: SUCCESS
+        type: string
+      taskId:
+        description: 任务ID
+        type: string
+      totalDurationMs:
+        description: 总耗时（毫秒）
+        type: integer
+    type: object
+  model.AgentLog:
+    properties:
+      agentName:
+        description: 智能体名称（如 title_generator、outline_generator）
+        type: string
+      createTime:
+        description: 记录创建时间
+        type: string
+      durationMs:
+        description: 执行耗时（毫秒）
+        type: integer
+      endTime:
+        description: 执行结束时间（进行中为 nil）
+        type: string
+      errorMessage:
+        description: 失败时的错误信息
+        type: string
+      id:
+        description: 主键 ID
+        type: integer
+      inputData:
+        description: 输入数据（JSON 字符串）
+        type: string
+      isDelete:
+        description: 软删除标记：0 正常，1 已删除
+        type: integer
+      outputData:
+        description: 输出数据（JSON 字符串）
+        type: string
+      prompt:
+        description: 发送给 LLM 的 Prompt 内容
+        type: string
+      startTime:
+        description: 执行开始时间
+        type: string
+      status:
+        description: 执行状态：RUNNING 进行中 / SUCCESS 成功 / FAILED 失败
+        enum:
+        - RUNNING
+        - SUCCESS
+        - FAILED
+        example: SUCCESS
+        type: string
+      taskId:
+        description: 关联的文章任务 ID（UUID）
+        type: string
+      updateTime:
+        description: 记录更新时间
+        type: string
+    type: object
+  model.AiModifyOutlineRequest:
+    properties:
+      modifySuggestion:
+        description: 用户对大纲的修改建议（自然语言）
+        example: 增加一节关于 AI 伦理的内容
+        type: string
+      taskId:
+        description: 任务 ID（UUID）
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - modifySuggestion
+    - taskId
+    type: object
+  model.ArticleInfo:
+    properties:
+      completedTime:
+        description: 完成时间
+        type: string
+      content:
+        description: 正文内容
+        type: string
+      createTime:
+        description: 创建时间
+        type: string
+      enabledImageMethods:
+        description: 允许的配图方式列表（已解析）
+        example:
+        - PEXELS
+        - MERMAID
+        items:
+          type: string
+        type: array
+      errorMessage:
+        description: 失败时的错误信息
+        example: 配额不足
+        type: string
+      fullContent:
+        description: 完整正文（含图片）
+        type: string
+      id:
+        description: 主键 ID
+        type: integer
+      images:
+        description: 配图结果列表（已解析）
+        items:
+          $ref: '#/definitions/model.ImageResult'
+        type: array
+      mainTitle:
+        description: 主标题
+        type: string
+      outline:
+        description: 大纲章节列表（已解析）
+        items:
+          $ref: '#/definitions/model.OutlineSection'
+        type: array
+      phase:
+        description: 当前阶段：PENDING / TITLE_GENERATING / TITLE_SELECTING / OUTLINE_GENERATING
+          / OUTLINE_EDITING / CONTENT_GENERATING
+        enum:
+        - PENDING
+        - TITLE_GENERATING
+        - TITLE_SELECTING
+        - OUTLINE_GENERATING
+        - OUTLINE_EDITING
+        - CONTENT_GENERATING
+        example: TITLE_SELECTING
+        type: string
+      status:
+        description: 任务状态：PENDING 等待 / PROCESSING 处理中 / COMPLETED 已完成 / FAILED 失败
+        enum:
+        - PENDING
+        - PROCESSING
+        - COMPLETED
+        - FAILED
+        example: PROCESSING
+        type: string
+      style:
+        description: 文章风格：tech 科技 / emotional 情感 / educational 教育 / humorous 幽默
+        enum:
+        - tech
+        - emotional
+        - educational
+        - humorous
+        example: tech
+        type: string
+      subTitle:
+        description: 副标题
+        type: string
+      taskId:
+        description: 任务 ID
+        type: string
+      titleOptions:
+        description: 标题方案列表（已解析）
+        items:
+          $ref: '#/definitions/model.TitleOption'
+        type: array
+      topic:
+        description: 文章主题
+        type: string
+      userDescription:
+        description: 用户补充描述
+        type: string
+      userId:
+        description: 所属用户 ID
+        type: integer
+    type: object
+  model.ArticlePageResult:
+    properties:
+      pageNum:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页条数
+        example: 10
+        type: integer
+      records:
+        description: 当前页文章列表
+        items:
+          $ref: '#/definitions/model.ArticleInfo'
+        type: array
+      total:
+        description: 符合条件的文章总数
+        example: 100
+        type: integer
+    type: object
+  model.ConfirmOutlineRequest:
+    properties:
+      outline:
+        description: 确认后的大纲章节列表
+        items:
+          $ref: '#/definitions/model.OutlineSection'
+        type: array
+      taskId:
+        description: 任务 ID（UUID）
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - outline
+    - taskId
+    type: object
+  model.ConfirmTitleRequest:
+    properties:
+      selectedMainTitle:
+        description: 用户选定的主标题
+        example: AI 重塑未来教育
+        type: string
+      selectedSubTitle:
+        description: 用户选定的副标题
+        example: 从技术到课堂的变革之路
+        type: string
+      taskId:
+        description: 任务 ID（UUID）
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      userDescription:
+        description: 用户补充描述（可选）
+        example: 面向 K12 教师，语气专业
+        type: string
+    required:
+    - selectedMainTitle
+    - selectedSubTitle
+    - taskId
+    type: object
+  model.CreateArticleRequest:
+    properties:
+      enabledImageMethods:
+        description: 允许的配图方式，为空表示支持全部
+        example:
+        - PEXELS
+        - MERMAID
+        items:
+          type: string
+        type: array
+      style:
+        description: 文章风格，可为空则使用默认
+        enum:
+        - tech
+        - emotional
+        - educational
+        - humorous
+        example: tech
+        type: string
+      topic:
+        description: 文章主题/关键词（必填）
+        example: AI 如何改变教育
+        type: string
+    required:
+    - topic
+    type: object
   model.DeleteRequest:
     properties:
       id:
+        description: 要删除的记录主键 ID（用户或文章）
+        example: 1
         type: integer
     required:
     - id
     type: object
+  model.ImageResult:
+    properties:
+      description:
+        description: 图片描述
+        type: string
+      keywords:
+        description: 搜索关键词
+        type: string
+      method:
+        description: 实际使用的配图方式
+        enum:
+        - PEXELS
+        - MERMAID
+        - NANO_BANANA
+        - ICONIFY
+        - EMOJI_PACK
+        - SVG_DIAGRAM
+        example: PEXELS
+        type: string
+      placeholderId:
+        description: 对应的占位符 ID
+        type: string
+      position:
+        description: 在正文中的位置序号
+        type: integer
+      sectionTitle:
+        description: 所属章节标题
+        type: string
+      url:
+        description: 图片访问 URL
+        type: string
+    type: object
   model.LoginRequest:
     properties:
       userAccount:
-        description: 账号，必填字符串
+        description: 登录账号
+        example: zhangsan
         minLength: 4
         type: string
       userPassword:
-        description: JSON 字段名，和前端一致（驼峰）
+        description: 登录密码
+        example: "12345678"
         minLength: 8
         type: string
     required:
@@ -47,68 +373,152 @@ definitions:
   model.LoginUser:
     properties:
       createTime:
+        description: 注册时间
         type: string
       editTime:
+        description: 资料最后编辑时间
         type: string
       id:
+        description: 主键 ID
         type: integer
       quota:
+        description: 剩余配额
         type: integer
       updateTime:
+        description: 最后更新时间
         type: string
       userAccount:
+        description: 登录账号
         type: string
       userAvatar:
+        description: 头像 URL
         type: string
       userName:
+        description: 用户昵称
         type: string
       userProfile:
+        description: 个人简介
         type: string
       userRole:
+        description: 用户角色：user 普通用户 / admin 管理员 / vip 会员
+        enum:
+        - user
+        - admin
+        - vip
+        example: user
         type: string
       vipTime:
+        description: VIP 开通时间
+        type: string
+    type: object
+  model.OutlineSection:
+    properties:
+      points:
+        description: 章节要点列表
+        items:
+          type: string
+        type: array
+      section:
+        description: 章节序号
+        type: integer
+      title:
+        description: 章节标题
         type: string
     type: object
   model.PageResult:
     properties:
       pageNum:
+        description: 当前页码
+        example: 1
         type: integer
       pageSize:
+        description: 每页条数
+        example: 10
         type: integer
-      records: {}
+      records:
+        description: 当前页数据列表（用户列表或文章列表）
       total:
+        description: 符合条件的总条数
+        example: 100
+        type: integer
+    type: object
+  model.QueryArticleRequest:
+    properties:
+      pageNum:
+        description: 页码，从 1 开始
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页条数
+        example: 10
+        type: integer
+      status:
+        description: 按任务状态筛选（可选）
+        enum:
+        - PENDING
+        - PROCESSING
+        - COMPLETED
+        - FAILED
+        example: COMPLETED
+        type: string
+      userId:
+        description: 按用户 ID 筛选（管理员可用，可选）
+        example: 1
         type: integer
     type: object
   model.QueryUserRequest:
     properties:
       id:
+        description: 按用户 ID 筛选（可选）
+        example: 1
         type: integer
       pageNum:
+        description: 页码，从 1 开始
+        example: 1
         type: integer
       pageSize:
+        description: 每页条数
+        example: 10
         type: integer
       sortField:
+        description: 排序字段（可选）
+        example: createTime
         type: string
       sortOrder:
+        description: 排序方向：asc / desc（可选）
+        example: desc
         type: string
       userAccount:
+        description: 按账号模糊筛选（可选）
+        example: zhangsan
         type: string
       userName:
+        description: 按昵称模糊筛选（可选）
+        example: 张三
         type: string
       userProfile:
+        description: 按简介模糊筛选（可选）
         type: string
       userRole:
+        description: 按角色筛选（可选）
+        example: user
         type: string
     type: object
   model.RegisterRequest:
     properties:
       checkPassword:
+        description: 确认密码，需与 userPassword 一致
+        example: "12345678"
         minLength: 8
         type: string
       userAccount:
+        description: 登录账号，至少 4 位
+        example: zhangsan
         minLength: 4
         type: string
       userPassword:
+        description: 登录密码，至少 8 位
+        example: "12345678"
         minLength: 8
         type: string
     required:
@@ -116,17 +526,40 @@ definitions:
     - userAccount
     - userPassword
     type: object
+  model.TitleOption:
+    properties:
+      mainTitle:
+        description: 主标题
+        type: string
+      subTitle:
+        description: 副标题
+        type: string
+    type: object
   model.UpdateUserRequest:
     properties:
       id:
+        description: 用户主键 ID
+        example: 1
         type: integer
       userAvatar:
+        description: 头像 URL（可选）
+        example: https://example.com/avatar.png
         type: string
       userName:
+        description: 用户昵称（可选，传 null 表示不更新）
+        example: 新昵称
         type: string
       userProfile:
+        description: 个人简介（可选）
+        example: 更新后的简介
         type: string
       userRole:
+        description: 用户角色（可选）
+        enum:
+        - user
+        - admin
+        - vip
+        example: vip
         type: string
     required:
     - id
@@ -134,59 +567,316 @@ definitions:
   model.User:
     properties:
       createTime:
+        description: 注册时间
         type: string
       editTime:
+        description: 资料最后编辑时间
         type: string
       id:
+        description: 主键 ID
         type: integer
       quota:
+        description: 剩余文章生成配额（VIP/管理员不扣减）
         type: integer
       updateTime:
+        description: 最后更新时间
         type: string
       userAccount:
+        description: 登录账号（唯一）
         type: string
       userAvatar:
+        description: 头像 URL（可为空）
         type: string
       userName:
+        description: 用户昵称（可为空）
         type: string
       userProfile:
+        description: 个人简介（可为空）
         type: string
       userRole:
+        description: 用户角色：user / admin / vip
+        enum:
+        - user
+        - admin
+        - vip
+        example: user
         type: string
       vipTime:
+        description: VIP 开通时间（非 VIP 为 nil）
         type: string
     type: object
   model.UserInfo:
     properties:
       createTime:
+        description: 注册时间
         type: string
       editTime:
+        description: 资料最后编辑时间
         type: string
       id:
+        description: 主键 ID
         type: integer
       updateTime:
+        description: 最后更新时间
         type: string
       userAccount:
+        description: 登录账号
         type: string
       userAvatar:
+        description: 头像 URL
         type: string
       userName:
+        description: 用户昵称
         type: string
       userProfile:
+        description: 个人简介
         type: string
       userRole:
+        description: 用户角色：user 普通用户 / admin 管理员 / vip 会员
+        enum:
+        - user
+        - admin
+        - vip
+        example: user
         type: string
       vipTime:
+        description: VIP 开通时间
         type: string
     type: object
+host: localhost:8123
 info:
-  contact: {}
-  description: Go backend API 文档
+  contact:
+    name: API Support
+    url: https://github.com/ai-content-creator
+  description: AI 内容创作平台后端 API。包含用户注册登录、文章多智能体生成、SSE 进度推送、配额管理等。
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://github.com/ai-content-creator
   title: AI Content Creator API
   version: "1.0"
 paths:
+  /article/{taskId}:
+    get:
+      description: 根据 taskId 获取文章详情，含标题、大纲、正文、状态、阶段等。普通用户只能查看自己的文章，管理员可查看全部。
+      parameters:
+      - description: 任务 ID（UUID）
+        in: path
+        name: taskId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 业务错误（未登录、无权限、任务不存在）
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
+      summary: 获取文章详情
+      tags:
+      - 文章
+  /article/ai-modify-outline:
+    post:
+      consumes:
+      - application/json
+      description: 根据用户自然语言修改意见，调用 LLM 重新生成大纲。返回修改后的大纲，需再调用 confirm-outline 确认。
+      parameters:
+      - description: 修改建议
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.AiModifyOutlineRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 业务错误
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
+      summary: AI 修改大纲
+      tags:
+      - 文章
+  /article/confirm-outline:
+    post:
+      consumes:
+      - application/json
+      description: 用户确认或编辑后的大纲，确认后异步进入 Phase3 生成正文与配图，进度通过 SSE 推送。
+      parameters:
+      - description: 确认大纲参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.ConfirmOutlineRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 业务错误
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
+      summary: 确认大纲
+      tags:
+      - 文章
+  /article/confirm-title:
+    post:
+      consumes:
+      - application/json
+      description: 用户从标题方案中选择主副标题，可选填写补充描述。确认后异步进入 Phase2 生成大纲，进度通过 SSE 推送。
+      parameters:
+      - description: 确认标题参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.ConfirmTitleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 业务错误
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
+      summary: 确认标题
+      tags:
+      - 文章
+  /article/create:
+    post:
+      consumes:
+      - application/json
+      description: 创建 AI 文章生成任务，扣减配额后异步生成标题方案。返回 taskId，前端通过 SSE 订阅进度。
+      parameters:
+      - description: 创建参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateArticleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 业务错误（code 非 0，如参数错误、未登录、配额不足）
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
+      summary: 创建文章任务
+      tags:
+      - 文章
+  /article/delete:
+    post:
+      consumes:
+      - application/json
+      description: 逻辑删除文章（isDelete=1）。普通用户只能删除自己的文章，管理员可删除任意文章。
+      parameters:
+      - description: 删除参数（文章主键 id，非 taskId）
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.DeleteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 业务错误
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
+      summary: 删除文章
+      tags:
+      - 文章
+  /article/execution-logs/{taskId}:
+    get:
+      description: 获取指定任务的智能体执行统计与各 Agent 详细日志（耗时、状态、Prompt 等）。
+      parameters:
+      - description: 任务 ID（UUID）
+        in: path
+        name: taskId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 业务错误
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 获取智能体执行日志
+      tags:
+      - 文章
+  /article/list:
+    post:
+      consumes:
+      - application/json
+      description: 分页查询文章列表。非管理员只能查看自己的文章；管理员可按 userId 筛选。
+      parameters:
+      - description: 查询参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.QueryArticleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 业务错误
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
+      summary: 分页查询文章列表
+      tags:
+      - 文章
+  /article/progress/{taskId}:
+    get:
+      description: 建立 Server-Sent Events 长连接，实时推送生成进度。需登录且有权访问该任务。响应 Content-Type
+        为 text/event-stream，事件名 message，data 为 JSON 字符串。
+      parameters:
+      - description: 任务 ID（UUID）
+        in: path
+        name: taskId
+        required: true
+        type: string
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: SSE 事件流
+          schema:
+            type: string
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: 未登录
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: 无权访问该任务
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
+      summary: SSE 推送文章生成进度
+      tags:
+      - 文章
   /health:
     get:
+      description: 服务存活探测，返回纯文本 ok
       produces:
       - text/plain
       responses:
@@ -201,6 +891,7 @@ paths:
     post:
       consumes:
       - application/json
+      description: 管理员创建用户，需 admin 角色
       parameters:
       - description: 创建参数
         in: body
@@ -212,15 +903,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 业务错误（无权限、参数错误等）
           schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  format: int64
-                  type: integer
-              type: object
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
       summary: 创建用户
       tags:
       - 用户管理
@@ -228,6 +915,7 @@ paths:
     post:
       consumes:
       - application/json
+      description: 管理员逻辑删除用户，需 admin 角色
       parameters:
       - description: 删除参数
         in: body
@@ -239,19 +927,17 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 业务错误
           schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  type: boolean
-              type: object
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
       summary: 删除用户
       tags:
       - 用户管理
   /user/get:
     get:
+      description: 管理员获取用户完整信息（含密码哈希等敏感字段），需 admin 角色
       parameters:
       - description: 用户 ID
         format: int64
@@ -263,36 +949,32 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 业务错误
           schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/model.User'
-              type: object
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
       summary: 根据 ID 获取用户
       tags:
       - 用户管理
   /user/get/login:
     get:
+      description: 从 Session 读取当前登录用户信息，含配额等
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 未登录
           schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/model.LoginUser'
-              type: object
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
       summary: 获取当前登录用户
       tags:
       - 用户
   /user/get/vo:
     get:
+      description: 获取用户公开信息（UserInfo），不含密码
       parameters:
       - description: 用户 ID
         format: int64
@@ -304,21 +986,17 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 业务错误
           schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/model.UserInfo'
-              type: object
-      summary: 根据 ID 获取用户信息
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 根据 ID 获取用户脱敏信息
       tags:
       - 用户
   /user/list/page/vo:
     post:
       consumes:
       - application/json
+      description: 管理员分页查询用户，支持多条件筛选与排序，需 admin 角色
       parameters:
       - description: 查询参数
         in: body
@@ -330,14 +1008,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 业务错误
           schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/model.PageResult'
-              type: object
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
       summary: 分页查询用户列表
       tags:
       - 用户管理
@@ -345,6 +1020,7 @@ paths:
     post:
       consumes:
       - application/json
+      description: 登录成功后写入 Session Cookie（session），后续受保护接口需携带
       parameters:
       - description: 登录参数
         in: body
@@ -356,31 +1032,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 业务错误（账号或密码错误等）
           schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/model.LoginUser'
-              type: object
+            $ref: '#/definitions/common.BaseResponse'
       summary: 用户登录
       tags:
       - 用户
   /user/logout:
     post:
+      description: 清除 Session，退出登录
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 业务错误
           schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  type: boolean
-              type: object
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
       summary: 用户注销
       tags:
       - 用户
@@ -388,6 +1057,7 @@ paths:
     post:
       consumes:
       - application/json
+      description: 注册新用户，账号至少 4 位，密码至少 8 位
       parameters:
       - description: 注册参数
         in: body
@@ -399,15 +1069,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 业务错误（参数错误、账号重复等）
           schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  format: int64
-                  type: integer
-              type: object
+            $ref: '#/definitions/common.BaseResponse'
       summary: 用户注册
       tags:
       - 用户
@@ -415,6 +1079,7 @@ paths:
     post:
       consumes:
       - application/json
+      description: 管理员更新用户信息，需 admin 角色
       parameters:
       - description: 更新参数
         in: body
@@ -426,15 +1091,20 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 业务错误
           schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  type: boolean
-              type: object
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - SessionCookie: []
       summary: 更新用户
       tags:
       - 用户管理
+schemes:
+- http
+securityDefinitions:
+  SessionCookie:
+    description: 登录成功后服务端写入 Session Cookie，受保护接口需携带
+    in: cookie
+    name: session
+    type: apiKey
 swagger: "2.0"

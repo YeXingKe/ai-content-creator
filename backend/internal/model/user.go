@@ -20,7 +20,7 @@ type User struct {
 	UserName     *string    `gorm:"column:userName;index:idx_userName" json:"userName"`                      // 用户昵称（可为空）
 	UserAvatar   *string    `gorm:"column:userAvatar" json:"userAvatar"`                                       // 头像 URL（可为空）
 	UserProfile  *string    `gorm:"column:userProfile" json:"userProfile"`                                     // 个人简介（可为空）
-	UserRole     string     `gorm:"column:userRole;default:user" json:"userRole"`                              // 用户角色：user / admin / vip
+	UserRole     string     `gorm:"column:userRole;default:user" json:"userRole" enums:"user,admin,vip" example:"user"` // 用户角色：user / admin / vip
 	Quota        int        `gorm:"column:quota;default:5" json:"quota"`                                       // 剩余文章生成配额（VIP/管理员不扣减）
 	VipTime      *time.Time `gorm:"column:vipTime" json:"vipTime"`                                             // VIP 开通时间（非 VIP 为 nil）
 	EditTime     *time.Time `gorm:"column:editTime" json:"editTime"`                                           // 资料最后编辑时间
@@ -41,7 +41,7 @@ type LoginUser struct {
 	UserName    *string    `json:"userName"`    // 用户昵称
 	UserAvatar  *string    `json:"userAvatar"`  // 头像 URL
 	UserProfile *string    `json:"userProfile"` // 个人简介
-	UserRole    string     `json:"userRole"`    // 用户角色
+	UserRole    string     `json:"userRole" enums:"user,admin,vip" example:"user"` // 用户角色：user 普通用户 / admin 管理员 / vip 会员
 	Quota       int        `json:"quota"`       // 剩余配额
 	VipTime     *time.Time `json:"vipTime"`     // VIP 开通时间
 	CreateTime  time.Time  `json:"createTime"`  // 注册时间
@@ -56,7 +56,7 @@ type UserInfo struct {
 	UserName    *string    `json:"userName"`    // 用户昵称
 	UserAvatar  *string    `json:"userAvatar"`  // 头像 URL
 	UserProfile *string    `json:"userProfile"` // 个人简介
-	UserRole    string     `json:"userRole"`    // 用户角色
+	UserRole    string     `json:"userRole" enums:"user,admin,vip" example:"user"` // 用户角色：user 普通用户 / admin 管理员 / vip 会员
 	VipTime     *time.Time `json:"vipTime"`     // VIP 开通时间
 	CreateTime  time.Time  `json:"createTime"`  // 注册时间
 	UpdateTime  time.Time  `json:"updateTime"`  // 最后更新时间

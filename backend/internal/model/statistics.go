@@ -20,6 +20,6 @@ type AgentExecutionStats struct {
 	TotalDurationMs int            `json:"totalDurationMs"` // 总耗时（毫秒）
 	AgentCount      int            `json:"agentCount"`      // 智能体数量
 	AgentDurations  map[string]int `json:"agentDurations"`  // 各智能体耗时
-	OverallStatus   string         `json:"overallStatus"`   // 总体状态：SUCCESS/FAILED/RUNNING
+	OverallStatus   string         `json:"overallStatus" enums:"SUCCESS,FAILED,RUNNING" example:"SUCCESS"` // 总体状态：SUCCESS 全部成功 / FAILED 存在失败 / RUNNING 仍在执行
 	Logs            []*AgentLog    `json:"logs"`            // 详细日志列表
 }

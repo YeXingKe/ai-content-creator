@@ -1,15 +1,377 @@
 {
+    "schemes": [
+        "http"
+    ],
     "swagger": "2.0",
     "info": {
-        "description": "Go backend API 文档",
+        "description": "AI 内容创作平台后端 API。包含用户注册登录、文章多智能体生成、SSE 进度推送、配额管理等。",
         "title": "AI Content Creator API",
-        "contact": {},
+        "termsOfService": "https://github.com/ai-content-creator",
+        "contact": {
+            "name": "API Support",
+            "url": "https://github.com/ai-content-creator"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
         "version": "1.0"
     },
+    "host": "localhost:8123",
     "basePath": "/api",
     "paths": {
+        "/article/ai-modify-outline": {
+            "post": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "根据用户自然语言修改意见，调用 LLM 重新生成大纲。返回修改后的大纲，需再调用 confirm-outline 确认。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章"
+                ],
+                "summary": "AI 修改大纲",
+                "parameters": [
+                    {
+                        "description": "修改建议",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.AiModifyOutlineRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "业务错误",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/article/confirm-outline": {
+            "post": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "用户确认或编辑后的大纲，确认后异步进入 Phase3 生成正文与配图，进度通过 SSE 推送。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章"
+                ],
+                "summary": "确认大纲",
+                "parameters": [
+                    {
+                        "description": "确认大纲参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.ConfirmOutlineRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "业务错误",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/article/confirm-title": {
+            "post": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "用户从标题方案中选择主副标题，可选填写补充描述。确认后异步进入 Phase2 生成大纲，进度通过 SSE 推送。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章"
+                ],
+                "summary": "确认标题",
+                "parameters": [
+                    {
+                        "description": "确认标题参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.ConfirmTitleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "业务错误",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/article/create": {
+            "post": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "创建 AI 文章生成任务，扣减配额后异步生成标题方案。返回 taskId，前端通过 SSE 订阅进度。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章"
+                ],
+                "summary": "创建文章任务",
+                "parameters": [
+                    {
+                        "description": "创建参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreateArticleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "业务错误（code 非 0，如参数错误、未登录、配额不足）",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/article/delete": {
+            "post": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "逻辑删除文章（isDelete=1）。普通用户只能删除自己的文章，管理员可删除任意文章。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章"
+                ],
+                "summary": "删除文章",
+                "parameters": [
+                    {
+                        "description": "删除参数（文章主键 id，非 taskId）",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.DeleteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "业务错误",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/article/execution-logs/{taskId}": {
+            "get": {
+                "description": "获取指定任务的智能体执行统计与各 Agent 详细日志（耗时、状态、Prompt 等）。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章"
+                ],
+                "summary": "获取智能体执行日志",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "任务 ID（UUID）",
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "业务错误",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/article/list": {
+            "post": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "分页查询文章列表。非管理员只能查看自己的文章；管理员可按 userId 筛选。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章"
+                ],
+                "summary": "分页查询文章列表",
+                "parameters": [
+                    {
+                        "description": "查询参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.QueryArticleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "业务错误",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/article/progress/{taskId}": {
+            "get": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "建立 Server-Sent Events 长连接，实时推送生成进度。需登录且有权访问该任务。响应 Content-Type 为 text/event-stream，事件名 message，data 为 JSON 字符串。",
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "文章"
+                ],
+                "summary": "SSE 推送文章生成进度",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "任务 ID（UUID）",
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SSE 事件流",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "无权访问该任务",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/article/{taskId}": {
+            "get": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "根据 taskId 获取文章详情，含标题、大纲、正文、状态、阶段等。普通用户只能查看自己的文章，管理员可查看全部。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章"
+                ],
+                "summary": "获取文章详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "任务 ID（UUID）",
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "业务错误（未登录、无权限、任务不存在）",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
+                "description": "服务存活探测，返回纯文本 ok",
                 "produces": [
                     "text/plain"
                 ],
@@ -29,6 +391,12 @@
         },
         "/user/add": {
             "post": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "管理员创建用户，需 admin 角色",
                 "consumes": [
                     "application/json"
                 ],
@@ -52,22 +420,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "业务错误（无权限、参数错误等）",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "integer",
-                                            "format": "int64"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -75,6 +430,12 @@
         },
         "/user/delete": {
             "post": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "管理员逻辑删除用户，需 admin 角色",
                 "consumes": [
                     "application/json"
                 ],
@@ -98,21 +459,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "业务错误",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "boolean"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -120,6 +469,12 @@
         },
         "/user/get": {
             "get": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "管理员获取用户完整信息（含密码哈希等敏感字段），需 admin 角色",
                 "produces": [
                     "application/json"
                 ],
@@ -139,21 +494,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "业务错误",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/model.User"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -161,6 +504,12 @@
         },
         "/user/get/login": {
             "get": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "从 Session 读取当前登录用户信息，含配额等",
                 "produces": [
                     "application/json"
                 ],
@@ -170,21 +519,9 @@
                 "summary": "获取当前登录用户",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "未登录",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/model.LoginUser"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -192,13 +529,14 @@
         },
         "/user/get/vo": {
             "get": {
+                "description": "获取用户公开信息（UserInfo），不含密码",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "用户"
                 ],
-                "summary": "根据 ID 获取用户信息",
+                "summary": "根据 ID 获取用户脱敏信息",
                 "parameters": [
                     {
                         "type": "integer",
@@ -211,21 +549,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "业务错误",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/model.UserInfo"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -233,6 +559,12 @@
         },
         "/user/list/page/vo": {
             "post": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "管理员分页查询用户，支持多条件筛选与排序，需 admin 角色",
                 "consumes": [
                     "application/json"
                 ],
@@ -256,21 +588,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "业务错误",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/model.PageResult"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -278,6 +598,7 @@
         },
         "/user/login": {
             "post": {
+                "description": "登录成功后写入 Session Cookie（session），后续受保护接口需携带",
                 "consumes": [
                     "application/json"
                 ],
@@ -301,21 +622,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "业务错误（账号或密码错误等）",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/model.LoginUser"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -323,6 +632,12 @@
         },
         "/user/logout": {
             "post": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "清除 Session，退出登录",
                 "produces": [
                     "application/json"
                 ],
@@ -332,21 +647,9 @@
                 "summary": "用户注销",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "业务错误",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "boolean"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -354,6 +657,7 @@
         },
         "/user/register": {
             "post": {
+                "description": "注册新用户，账号至少 4 位，密码至少 8 位",
                 "consumes": [
                     "application/json"
                 ],
@@ -377,22 +681,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "业务错误（参数错误、账号重复等）",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "integer",
-                                            "format": "int64"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -400,6 +691,12 @@
         },
         "/user/update": {
             "post": {
+                "security": [
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "管理员更新用户信息，需 admin 角色",
                 "consumes": [
                     "application/json"
                 ],
@@ -423,21 +720,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "业务错误",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "boolean"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -449,11 +734,17 @@
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "integer"
+                    "description": "业务状态码，0 表示成功，非 0 表示失败",
+                    "type": "integer",
+                    "example": 0
                 },
-                "data": {},
+                "data": {
+                    "description": "响应数据，成功时返回；失败时通常为 null"
+                },
                 "message": {
-                    "type": "string"
+                    "description": "响应消息，成功时为 ok，失败时为错误描述",
+                    "type": "string",
+                    "example": "ok"
                 }
             }
         },
@@ -464,19 +755,395 @@
             ],
             "properties": {
                 "userAccount": {
-                    "type": "string"
+                    "description": "登录账号",
+                    "type": "string",
+                    "example": "newuser"
                 },
                 "userAvatar": {
-                    "type": "string"
+                    "description": "头像 URL（可选）",
+                    "type": "string",
+                    "example": "https://example.com/avatar.png"
                 },
                 "userName": {
-                    "type": "string"
+                    "description": "用户昵称（可选）",
+                    "type": "string",
+                    "example": "新用户"
                 },
                 "userProfile": {
-                    "type": "string"
+                    "description": "个人简介（可选）",
+                    "type": "string",
+                    "example": "个人简介"
                 },
                 "userRole": {
+                    "description": "用户角色：user / admin / vip",
+                    "type": "string",
+                    "enum": [
+                        "user",
+                        "admin",
+                        "vip"
+                    ],
+                    "example": "user"
+                }
+            }
+        },
+        "model.AgentExecutionStats": {
+            "type": "object",
+            "properties": {
+                "agentCount": {
+                    "description": "智能体数量",
+                    "type": "integer"
+                },
+                "agentDurations": {
+                    "description": "各智能体耗时",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "logs": {
+                    "description": "详细日志列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.AgentLog"
+                    }
+                },
+                "overallStatus": {
+                    "description": "总体状态：SUCCESS 全部成功 / FAILED 存在失败 / RUNNING 仍在执行",
+                    "type": "string",
+                    "enum": [
+                        "SUCCESS",
+                        "FAILED",
+                        "RUNNING"
+                    ],
+                    "example": "SUCCESS"
+                },
+                "taskId": {
+                    "description": "任务ID",
                     "type": "string"
+                },
+                "totalDurationMs": {
+                    "description": "总耗时（毫秒）",
+                    "type": "integer"
+                }
+            }
+        },
+        "model.AgentLog": {
+            "type": "object",
+            "properties": {
+                "agentName": {
+                    "description": "智能体名称（如 title_generator、outline_generator）",
+                    "type": "string"
+                },
+                "createTime": {
+                    "description": "记录创建时间",
+                    "type": "string"
+                },
+                "durationMs": {
+                    "description": "执行耗时（毫秒）",
+                    "type": "integer"
+                },
+                "endTime": {
+                    "description": "执行结束时间（进行中为 nil）",
+                    "type": "string"
+                },
+                "errorMessage": {
+                    "description": "失败时的错误信息",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "主键 ID",
+                    "type": "integer"
+                },
+                "inputData": {
+                    "description": "输入数据（JSON 字符串）",
+                    "type": "string"
+                },
+                "isDelete": {
+                    "description": "软删除标记：0 正常，1 已删除",
+                    "type": "integer"
+                },
+                "outputData": {
+                    "description": "输出数据（JSON 字符串）",
+                    "type": "string"
+                },
+                "prompt": {
+                    "description": "发送给 LLM 的 Prompt 内容",
+                    "type": "string"
+                },
+                "startTime": {
+                    "description": "执行开始时间",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "执行状态：RUNNING 进行中 / SUCCESS 成功 / FAILED 失败",
+                    "type": "string",
+                    "enum": [
+                        "RUNNING",
+                        "SUCCESS",
+                        "FAILED"
+                    ],
+                    "example": "SUCCESS"
+                },
+                "taskId": {
+                    "description": "关联的文章任务 ID（UUID）",
+                    "type": "string"
+                },
+                "updateTime": {
+                    "description": "记录更新时间",
+                    "type": "string"
+                }
+            }
+        },
+        "model.AiModifyOutlineRequest": {
+            "type": "object",
+            "required": [
+                "modifySuggestion",
+                "taskId"
+            ],
+            "properties": {
+                "modifySuggestion": {
+                    "description": "用户对大纲的修改建议（自然语言）",
+                    "type": "string",
+                    "example": "增加一节关于 AI 伦理的内容"
+                },
+                "taskId": {
+                    "description": "任务 ID（UUID）",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "model.ArticleInfo": {
+            "type": "object",
+            "properties": {
+                "completedTime": {
+                    "description": "完成时间",
+                    "type": "string"
+                },
+                "content": {
+                    "description": "正文内容",
+                    "type": "string"
+                },
+                "createTime": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "enabledImageMethods": {
+                    "description": "允许的配图方式列表（已解析）",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "PEXELS",
+                        "MERMAID"
+                    ]
+                },
+                "errorMessage": {
+                    "description": "失败时的错误信息",
+                    "type": "string",
+                    "example": "配额不足"
+                },
+                "fullContent": {
+                    "description": "完整正文（含图片）",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "主键 ID",
+                    "type": "integer"
+                },
+                "images": {
+                    "description": "配图结果列表（已解析）",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ImageResult"
+                    }
+                },
+                "mainTitle": {
+                    "description": "主标题",
+                    "type": "string"
+                },
+                "outline": {
+                    "description": "大纲章节列表（已解析）",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.OutlineSection"
+                    }
+                },
+                "phase": {
+                    "description": "当前阶段：PENDING / TITLE_GENERATING / TITLE_SELECTING / OUTLINE_GENERATING / OUTLINE_EDITING / CONTENT_GENERATING",
+                    "type": "string",
+                    "enum": [
+                        "PENDING",
+                        "TITLE_GENERATING",
+                        "TITLE_SELECTING",
+                        "OUTLINE_GENERATING",
+                        "OUTLINE_EDITING",
+                        "CONTENT_GENERATING"
+                    ],
+                    "example": "TITLE_SELECTING"
+                },
+                "status": {
+                    "description": "任务状态：PENDING 等待 / PROCESSING 处理中 / COMPLETED 已完成 / FAILED 失败",
+                    "type": "string",
+                    "enum": [
+                        "PENDING",
+                        "PROCESSING",
+                        "COMPLETED",
+                        "FAILED"
+                    ],
+                    "example": "PROCESSING"
+                },
+                "style": {
+                    "description": "文章风格：tech 科技 / emotional 情感 / educational 教育 / humorous 幽默",
+                    "type": "string",
+                    "enum": [
+                        "tech",
+                        "emotional",
+                        "educational",
+                        "humorous"
+                    ],
+                    "example": "tech"
+                },
+                "subTitle": {
+                    "description": "副标题",
+                    "type": "string"
+                },
+                "taskId": {
+                    "description": "任务 ID",
+                    "type": "string"
+                },
+                "titleOptions": {
+                    "description": "标题方案列表（已解析）",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TitleOption"
+                    }
+                },
+                "topic": {
+                    "description": "文章主题",
+                    "type": "string"
+                },
+                "userDescription": {
+                    "description": "用户补充描述",
+                    "type": "string"
+                },
+                "userId": {
+                    "description": "所属用户 ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "model.ArticlePageResult": {
+            "type": "object",
+            "properties": {
+                "pageNum": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页条数",
+                    "type": "integer",
+                    "example": 10
+                },
+                "records": {
+                    "description": "当前页文章列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ArticleInfo"
+                    }
+                },
+                "total": {
+                    "description": "符合条件的文章总数",
+                    "type": "integer",
+                    "example": 100
+                }
+            }
+        },
+        "model.ConfirmOutlineRequest": {
+            "type": "object",
+            "required": [
+                "outline",
+                "taskId"
+            ],
+            "properties": {
+                "outline": {
+                    "description": "确认后的大纲章节列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.OutlineSection"
+                    }
+                },
+                "taskId": {
+                    "description": "任务 ID（UUID）",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "model.ConfirmTitleRequest": {
+            "type": "object",
+            "required": [
+                "selectedMainTitle",
+                "selectedSubTitle",
+                "taskId"
+            ],
+            "properties": {
+                "selectedMainTitle": {
+                    "description": "用户选定的主标题",
+                    "type": "string",
+                    "example": "AI 重塑未来教育"
+                },
+                "selectedSubTitle": {
+                    "description": "用户选定的副标题",
+                    "type": "string",
+                    "example": "从技术到课堂的变革之路"
+                },
+                "taskId": {
+                    "description": "任务 ID（UUID）",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "userDescription": {
+                    "description": "用户补充描述（可选）",
+                    "type": "string",
+                    "example": "面向 K12 教师，语气专业"
+                }
+            }
+        },
+        "model.CreateArticleRequest": {
+            "type": "object",
+            "required": [
+                "topic"
+            ],
+            "properties": {
+                "enabledImageMethods": {
+                    "description": "允许的配图方式，为空表示支持全部",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "PEXELS",
+                        "MERMAID"
+                    ]
+                },
+                "style": {
+                    "description": "文章风格，可为空则使用默认",
+                    "type": "string",
+                    "enum": [
+                        "tech",
+                        "emotional",
+                        "educational",
+                        "humorous"
+                    ],
+                    "example": "tech"
+                },
+                "topic": {
+                    "description": "文章主题/关键词（必填）",
+                    "type": "string",
+                    "example": "AI 如何改变教育"
                 }
             }
         },
@@ -487,7 +1154,51 @@
             ],
             "properties": {
                 "id": {
+                    "description": "要删除的记录主键 ID（用户或文章）",
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "model.ImageResult": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "图片描述",
+                    "type": "string"
+                },
+                "keywords": {
+                    "description": "搜索关键词",
+                    "type": "string"
+                },
+                "method": {
+                    "description": "实际使用的配图方式",
+                    "type": "string",
+                    "enum": [
+                        "PEXELS",
+                        "MERMAID",
+                        "NANO_BANANA",
+                        "ICONIFY",
+                        "EMOJI_PACK",
+                        "SVG_DIAGRAM"
+                    ],
+                    "example": "PEXELS"
+                },
+                "placeholderId": {
+                    "description": "对应的占位符 ID",
+                    "type": "string"
+                },
+                "position": {
+                    "description": "在正文中的位置序号",
                     "type": "integer"
+                },
+                "sectionTitle": {
+                    "description": "所属章节标题",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "图片访问 URL",
+                    "type": "string"
                 }
             }
         },
@@ -499,14 +1210,16 @@
             ],
             "properties": {
                 "userAccount": {
-                    "description": "账号，必填字符串",
+                    "description": "登录账号",
                     "type": "string",
-                    "minLength": 4
+                    "minLength": 4,
+                    "example": "zhangsan"
                 },
                 "userPassword": {
-                    "description": "JSON 字段名，和前端一致（驼峰）",
+                    "description": "登录密码",
                     "type": "string",
-                    "minLength": 8
+                    "minLength": 8,
+                    "example": "12345678"
                 }
             }
         },
@@ -514,36 +1227,73 @@
             "type": "object",
             "properties": {
                 "createTime": {
+                    "description": "注册时间",
                     "type": "string"
                 },
                 "editTime": {
+                    "description": "资料最后编辑时间",
                     "type": "string"
                 },
                 "id": {
+                    "description": "主键 ID",
                     "type": "integer"
                 },
                 "quota": {
+                    "description": "剩余配额",
                     "type": "integer"
                 },
                 "updateTime": {
+                    "description": "最后更新时间",
                     "type": "string"
                 },
                 "userAccount": {
+                    "description": "登录账号",
                     "type": "string"
                 },
                 "userAvatar": {
+                    "description": "头像 URL",
                     "type": "string"
                 },
                 "userName": {
+                    "description": "用户昵称",
                     "type": "string"
                 },
                 "userProfile": {
+                    "description": "个人简介",
                     "type": "string"
                 },
                 "userRole": {
-                    "type": "string"
+                    "description": "用户角色：user 普通用户 / admin 管理员 / vip 会员",
+                    "type": "string",
+                    "enum": [
+                        "user",
+                        "admin",
+                        "vip"
+                    ],
+                    "example": "user"
                 },
                 "vipTime": {
+                    "description": "VIP 开通时间",
+                    "type": "string"
+                }
+            }
+        },
+        "model.OutlineSection": {
+            "type": "object",
+            "properties": {
+                "points": {
+                    "description": "章节要点列表",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "section": {
+                    "description": "章节序号",
+                    "type": "integer"
+                },
+                "title": {
+                    "description": "章节标题",
                     "type": "string"
                 }
             }
@@ -552,14 +1302,53 @@
             "type": "object",
             "properties": {
                 "pageNum": {
-                    "type": "integer"
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
                 },
                 "pageSize": {
-                    "type": "integer"
+                    "description": "每页条数",
+                    "type": "integer",
+                    "example": 10
                 },
-                "records": {},
+                "records": {
+                    "description": "当前页数据列表（用户列表或文章列表）"
+                },
                 "total": {
-                    "type": "integer"
+                    "description": "符合条件的总条数",
+                    "type": "integer",
+                    "example": 100
+                }
+            }
+        },
+        "model.QueryArticleRequest": {
+            "type": "object",
+            "properties": {
+                "pageNum": {
+                    "description": "页码，从 1 开始",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页条数",
+                    "type": "integer",
+                    "example": 10
+                },
+                "status": {
+                    "description": "按任务状态筛选（可选）",
+                    "type": "string",
+                    "enum": [
+                        "PENDING",
+                        "PROCESSING",
+                        "COMPLETED",
+                        "FAILED"
+                    ],
+                    "example": "COMPLETED"
+                },
+                "userId": {
+                    "description": "按用户 ID 筛选（管理员可用，可选）",
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -567,31 +1356,48 @@
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "integer"
+                    "description": "按用户 ID 筛选（可选）",
+                    "type": "integer",
+                    "example": 1
                 },
                 "pageNum": {
-                    "type": "integer"
+                    "description": "页码，从 1 开始",
+                    "type": "integer",
+                    "example": 1
                 },
                 "pageSize": {
-                    "type": "integer"
+                    "description": "每页条数",
+                    "type": "integer",
+                    "example": 10
                 },
                 "sortField": {
-                    "type": "string"
+                    "description": "排序字段（可选）",
+                    "type": "string",
+                    "example": "createTime"
                 },
                 "sortOrder": {
-                    "type": "string"
+                    "description": "排序方向：asc / desc（可选）",
+                    "type": "string",
+                    "example": "desc"
                 },
                 "userAccount": {
-                    "type": "string"
+                    "description": "按账号模糊筛选（可选）",
+                    "type": "string",
+                    "example": "zhangsan"
                 },
                 "userName": {
-                    "type": "string"
+                    "description": "按昵称模糊筛选（可选）",
+                    "type": "string",
+                    "example": "张三"
                 },
                 "userProfile": {
+                    "description": "按简介模糊筛选（可选）",
                     "type": "string"
                 },
                 "userRole": {
-                    "type": "string"
+                    "description": "按角色筛选（可选）",
+                    "type": "string",
+                    "example": "user"
                 }
             }
         },
@@ -604,16 +1410,35 @@
             ],
             "properties": {
                 "checkPassword": {
+                    "description": "确认密码，需与 userPassword 一致",
                     "type": "string",
-                    "minLength": 8
+                    "minLength": 8,
+                    "example": "12345678"
                 },
                 "userAccount": {
+                    "description": "登录账号，至少 4 位",
                     "type": "string",
-                    "minLength": 4
+                    "minLength": 4,
+                    "example": "zhangsan"
                 },
                 "userPassword": {
+                    "description": "登录密码，至少 8 位",
                     "type": "string",
-                    "minLength": 8
+                    "minLength": 8,
+                    "example": "12345678"
+                }
+            }
+        },
+        "model.TitleOption": {
+            "type": "object",
+            "properties": {
+                "mainTitle": {
+                    "description": "主标题",
+                    "type": "string"
+                },
+                "subTitle": {
+                    "description": "副标题",
+                    "type": "string"
                 }
             }
         },
@@ -624,19 +1449,34 @@
             ],
             "properties": {
                 "id": {
-                    "type": "integer"
+                    "description": "用户主键 ID",
+                    "type": "integer",
+                    "example": 1
                 },
                 "userAvatar": {
-                    "type": "string"
+                    "description": "头像 URL（可选）",
+                    "type": "string",
+                    "example": "https://example.com/avatar.png"
                 },
                 "userName": {
-                    "type": "string"
+                    "description": "用户昵称（可选，传 null 表示不更新）",
+                    "type": "string",
+                    "example": "新昵称"
                 },
                 "userProfile": {
-                    "type": "string"
+                    "description": "个人简介（可选）",
+                    "type": "string",
+                    "example": "更新后的简介"
                 },
                 "userRole": {
-                    "type": "string"
+                    "description": "用户角色（可选）",
+                    "type": "string",
+                    "enum": [
+                        "user",
+                        "admin",
+                        "vip"
+                    ],
+                    "example": "vip"
                 }
             }
         },
@@ -644,36 +1484,53 @@
             "type": "object",
             "properties": {
                 "createTime": {
+                    "description": "注册时间",
                     "type": "string"
                 },
                 "editTime": {
+                    "description": "资料最后编辑时间",
                     "type": "string"
                 },
                 "id": {
+                    "description": "主键 ID",
                     "type": "integer"
                 },
                 "quota": {
+                    "description": "剩余文章生成配额（VIP/管理员不扣减）",
                     "type": "integer"
                 },
                 "updateTime": {
+                    "description": "最后更新时间",
                     "type": "string"
                 },
                 "userAccount": {
+                    "description": "登录账号（唯一）",
                     "type": "string"
                 },
                 "userAvatar": {
+                    "description": "头像 URL（可为空）",
                     "type": "string"
                 },
                 "userName": {
+                    "description": "用户昵称（可为空）",
                     "type": "string"
                 },
                 "userProfile": {
+                    "description": "个人简介（可为空）",
                     "type": "string"
                 },
                 "userRole": {
-                    "type": "string"
+                    "description": "用户角色：user / admin / vip",
+                    "type": "string",
+                    "enum": [
+                        "user",
+                        "admin",
+                        "vip"
+                    ],
+                    "example": "user"
                 },
                 "vipTime": {
+                    "description": "VIP 开通时间（非 VIP 为 nil）",
                     "type": "string"
                 }
             }
@@ -682,36 +1539,60 @@
             "type": "object",
             "properties": {
                 "createTime": {
+                    "description": "注册时间",
                     "type": "string"
                 },
                 "editTime": {
+                    "description": "资料最后编辑时间",
                     "type": "string"
                 },
                 "id": {
+                    "description": "主键 ID",
                     "type": "integer"
                 },
                 "updateTime": {
+                    "description": "最后更新时间",
                     "type": "string"
                 },
                 "userAccount": {
+                    "description": "登录账号",
                     "type": "string"
                 },
                 "userAvatar": {
+                    "description": "头像 URL",
                     "type": "string"
                 },
                 "userName": {
+                    "description": "用户昵称",
                     "type": "string"
                 },
                 "userProfile": {
+                    "description": "个人简介",
                     "type": "string"
                 },
                 "userRole": {
-                    "type": "string"
+                    "description": "用户角色：user 普通用户 / admin 管理员 / vip 会员",
+                    "type": "string",
+                    "enum": [
+                        "user",
+                        "admin",
+                        "vip"
+                    ],
+                    "example": "user"
                 },
                 "vipTime": {
+                    "description": "VIP 开通时间",
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "SessionCookie": {
+            "description": "登录成功后服务端写入 Session Cookie，受保护接口需携带",
+            "type": "apiKey",
+            "name": "session",
+            "in": "cookie"
         }
     }
 }
